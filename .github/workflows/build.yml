@@ -1,0 +1,26 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.repository.owner.id == github.event.sender.id
+    steps:
+    - name: Install repo
+      run: |
+        mkdir ~/bin
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        sudo ln -sf ~/bin/repo /usr/bin/repo
+
+    - name: Sync
+      run: |
+        repo init -u https://gitlab.com/xprateek/kernel_manifest -b common-android14-6.1 --depth=1
+        repo sync -j$(nproc)
+
+    - name: Build
+      run: |
+        tools/bazel build --config=fast //common:kernel_aarch64_dist
+        ls out/*
